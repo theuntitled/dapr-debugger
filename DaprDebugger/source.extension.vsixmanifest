@@ -3,7 +3,7 @@
     <Metadata>
         <Identity Id="DaprDebugger.632c259f-32e6-442b-af96-3cb79c05d1ed" Version="1.0" Language="en-US" Publisher="Fazekas, Josef" />
         <DisplayName>DaprDebugger</DisplayName>
-        <Description xml:space="preserve">Extension for a better dev expierence with dapr.io in V
+        <Description xml:space="preserve">Extension for a better dev expierence with dapr.io in Visual Studio 2019</Description>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[16.0, 17.0)" />
