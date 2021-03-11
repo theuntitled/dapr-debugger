@@ -2,7 +2,6 @@
 using System.ComponentModel.Design;
 using System.Linq;
 using EnvDTE;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 
@@ -24,12 +23,6 @@ namespace DaprDebugger.Commands
 		public static readonly Guid CommandSet = new Guid("7c886e37-96d2-4c02-9ea5-c6b2f59bff2b");
 
 		/// <summary>
-		///     Reference to the <see cref="DTEEvents" />.
-		/// </summary>
-		// ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-		private readonly DTEEvents _dteEvents;
-
-		/// <summary>
 		///     The menu item.
 		/// </summary>
 		// ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -46,8 +39,7 @@ namespace DaprDebugger.Commands
 		/// </summary>
 		/// <param name="package">Owner package, not null.</param>
 		/// <param name="commandService">Command service to add command to, not null.</param>
-		/// <param name="dte2">A <see cref="DTE2"/> instance, not null.</param>
-		private AttachToAllDaprInstancesInSolution(AsyncPackage package, OleMenuCommandService commandService, DTE2 dte2)
+		private AttachToAllDaprInstancesInSolution(AsyncPackage package, OleMenuCommandService commandService)
 		{
 			this.package = package ?? throw new ArgumentNullException(nameof(package));
 
@@ -58,10 +50,6 @@ namespace DaprDebugger.Commands
 			_menuItem = new MenuCommand(Execute, menuCommandId);
 
 			commandService.AddCommand(_menuItem);
-
-			_dteEvents = dte2.Events.DTEEvents;
-
-			_dteEvents.ModeChanged += _ => { _menuItem.Enabled = dte2.Mode == vsIDEMode.vsIDEModeDesign; };
 		}
 
 		/// <summary>
@@ -86,9 +74,7 @@ namespace DaprDebugger.Commands
 
 			var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
-			var dte2 = await package.GetDTE2Async();
-
-			Instance = new AttachToAllDaprInstancesInSolution(package, commandService, dte2);
+			Instance = new AttachToAllDaprInstancesInSolution(package, commandService);
 		}
 
 		/// <summary>
