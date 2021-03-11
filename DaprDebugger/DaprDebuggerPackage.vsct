@@ -40,7 +40,7 @@
          must be a menu. -->
     <Groups>
       <Group guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" priority="0x0600">
-        <Parent guid="guidVSDebugGroup" id="IDM_DEBUG_MENU" />
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD" />
       </Group>
     </Groups>
 
