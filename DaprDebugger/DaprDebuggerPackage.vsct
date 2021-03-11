@@ -59,14 +59,14 @@
         <Parent guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" />
         <Icon guid="daprImages" id="bmpPicDebug" />
         <Strings>
-          <ButtonText>Debug all dapr instances</ButtonText>
+          <ButtonText>Debug dapr projects</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidDaprDebuggerPackageCmdSet" id="AttachToAllDaprInstances" priority="0x0101" type="Button">
         <Parent guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" />
         <Icon guid="daprImages" id="bmpPicAttach" />
         <Strings>
-          <ButtonText>Attach debugger to dapr instances</ButtonText>
+          <ButtonText>Attach debugger to dapr projects</ButtonText>
         </Strings>
       </Button>
     </Buttons>

@@ -125,8 +125,22 @@ namespace DaprDebugger.Commands
 
 			var projects = Utilities.GetCodeProjectsInSolution(dte2);
 
+			var outputPane = Utilities.GetDebugOutputPane(dte2);
+
+			outputPane.Clear();
+			outputPane.OutputString("Checking projects in solution for dapr configuration.\n");
+
 			foreach (var project in projects)
 			{
+				if (project.Name == "Miscellaneous Files")
+				{
+					outputPane.OutputString($"Skipping project {project.Name}\n");
+
+					continue;
+				}
+
+				outputPane.OutputString($"Checking for dapr in project {project.Name}\n");
+
 				var properties = project.Properties.Cast<Property>()
 				                        .ToList();
 
@@ -148,6 +162,8 @@ namespace DaprDebugger.Commands
 
 				if (string.IsNullOrEmpty(projectFileName) || string.IsNullOrEmpty(projectOutputFileName) || string.IsNullOrEmpty(projectFullPath))
 				{
+					outputPane.OutputString($"Dapr configuration not found in project {project.Name}\n");
+
 					continue;
 				}
 
@@ -168,8 +184,7 @@ namespace DaprDebugger.Commands
 					continue;
 				}
 
-				Utilities.GetDebugOutputPane(dte2)
-				         .OutputString($"Registering dapr instance for project {project.Name}\n");
+				outputPane.OutputString($"Registering dapr instance for project {project.Name}\n");
 
 				var arguments = new List<string>
 				{
@@ -197,10 +212,9 @@ namespace DaprDebugger.Commands
 				};
 
 
-				process.Exited += (_sender, _args) =>
+				process.Exited += (_, _2) =>
 				{
-					Utilities.GetDebugOutputPane(dte2)
-					         .OutputString($"Dapr process ({project.Name}) exited with code {process.ExitCode}\n");
+					outputPane.OutputString($"Dapr process ({project.Name}) exited with code {process.ExitCode}\n");
 
 					KillProcesses();
 				};
@@ -219,8 +233,12 @@ namespace DaprDebugger.Commands
 				});
 			}
 
+			outputPane.OutputString("Project scan completed.\n");
+
 			if (Instances.Any(item => !item.IsRunning))
 			{
+				outputPane.OutputString("Not all processes could be started, stopping debugging session.\n");
+
 				KillProcesses();
 
 				// TODO: Alert?
@@ -231,8 +249,7 @@ namespace DaprDebugger.Commands
 			var notAttached = Instances.Where(item => !item.IsAttached)
 			                           .ToList();
 
-			Utilities.GetDebugOutputPane(dte2)
-			         .OutputString("Waiting for dotnet start.\n");
+			outputPane.OutputString($"Waiting for {notAttached.Count} dotnet processes start.\n");
 
 			while (notAttached.Any())
 			{
@@ -241,21 +258,33 @@ namespace DaprDebugger.Commands
 					var process = dte2.Debugger.LocalProcesses.Cast<EnvDTE.Process>()
 					                  .FirstOrDefault(item => item.Name.Contains(instance.OutputFileName));
 
+					outputPane.OutputString($"Searching for {instance.AppId} dotnet process.\n");
+
 					if (process != null)
 					{
 						process.Attach();
 
 						instance.IsAttached = true;
 						instance.DotNetProcessId = process.ProcessID;
+
+						outputPane.OutputString($"Attached to dotnet process for {instance.AppId}.\n");
+					}
+					else
+					{
+						outputPane.OutputString($"No dotnet process found for {instance.AppId}.\n");
 					}
 				}
 
 				notAttached = Instances.Where(item => !item.IsAttached)
 				                       .ToList();
+
+				if (notAttached.Any())
+				{
+					await Task.Delay(250);
+				}
 			}
 
-			Utilities.GetDebugOutputPane(dte2)
-			         .OutputString("Debugging started.\n");
+			outputPane.OutputString("Debugging started.\n");
 		}
 
 		private void KillProcesses()
