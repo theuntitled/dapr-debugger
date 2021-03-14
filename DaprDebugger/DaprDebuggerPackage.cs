@@ -35,6 +35,8 @@ namespace DaprDebugger
 		/// </summary>
 		public const string PackageGuidString = "a3c8cf15-c304-4937-bbd3-d4f1933cebe9";
 
+		public DaprDependencyManager DaprDependencyManager;
+
 		#region Package Members
 
 		/// <summary>
@@ -55,8 +57,16 @@ namespace DaprDebugger
 			// When initialized asynchronously, the current thread may be a background thread at this point.
 			// Do any initialization that requires the UI thread after switching to the UI thread.
 			await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+			DaprDependencyManager = new DaprDependencyManager(this);
+
 			await AttachToAllDaprInstancesInSolution.InitializeAsync(this);
 			await DebugAllDaprInstancesInSolution.InitializeAsync(this);
+			await StartDependencies.InitializeAsync(this);
+			await StopDependencies.InitializeAsync(this);
+			await RestartDependencies.InitializeAsync(this);
+
+			await this.UpdateUserInterfaceAsync();
 		}
 
 		#endregion

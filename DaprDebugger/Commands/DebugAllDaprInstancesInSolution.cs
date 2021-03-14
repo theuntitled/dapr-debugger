@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Linq;
-using System.Management;
 using System.Xml;
 using DaprDebugger.Models;
 using EnvDTE;
@@ -44,7 +43,7 @@ namespace DaprDebugger.Commands
 		/// <summary>
 		///     VS Package that provides this command, not null.
 		/// </summary>
-		private readonly AsyncPackage package;
+		private readonly DaprDebuggerPackage package;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="DebugAllDaprInstancesInSolution" /> class.
@@ -53,7 +52,7 @@ namespace DaprDebugger.Commands
 		/// <param name="package">Owner package, not null.</param>
 		/// <param name="commandService">Command service to add command to, not null.</param>
 		/// <param name="dte2">A <see cref="DTE2" /> instance, not null.</param>
-		private DebugAllDaprInstancesInSolution(AsyncPackage package, OleMenuCommandService commandService, DTE2 dte2)
+		private DebugAllDaprInstancesInSolution(DaprDebuggerPackage package, OleMenuCommandService commandService, DTE2 dte2)
 		{
 			this.package = package ?? throw new ArgumentNullException(nameof(package));
 
@@ -71,9 +70,6 @@ namespace DaprDebugger.Commands
 			{
 				_menuItem.Enabled = dte2.Mode == vsIDEMode.vsIDEModeDesign;
 
-				Utilities.GetDebugOutputPane(dte2)
-				         .OutputString($"Mode changed to {dte2.Mode}\n");
-
 				if (dte2.Mode == vsIDEMode.vsIDEModeDesign && lastMode == vsIDEMode.vsIDEModeDebug)
 				{
 					KillProcesses();
@@ -86,11 +82,6 @@ namespace DaprDebugger.Commands
 		/// </summary>
 		public static DebugAllDaprInstancesInSolution Instance { get; private set; }
 
-		/// <summary>
-		///     Gets the service provider from the owner package.
-		/// </summary>
-		private IAsyncServiceProvider ServiceProvider => package;
-
 		private List<DebuggableInstance> Instances { get; } = new List<DebuggableInstance>();
 
 		private bool KillingProcesses { get; set; }
@@ -99,7 +90,7 @@ namespace DaprDebugger.Commands
 		///     Initializes the singleton instance of the command.
 		/// </summary>
 		/// <param name="package">Owner package, not null.</param>
-		public static async Task InitializeAsync(AsyncPackage package)
+		public static async Task InitializeAsync(DaprDebuggerPackage package)
 		{
 			// Switch to the main thread - the call to AddCommand in AttachToAllDaprInstancesInSolutions's constructor requires
 			// the UI thread.
@@ -121,7 +112,9 @@ namespace DaprDebugger.Commands
 		/// <param name="e">Event args.</param>
 		private async void Execute(object sender, EventArgs e)
 		{
-			var dte2 = await ServiceProvider.GetDTE2Async();
+			await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+			var dte2 = await package.GetDTE2Async();
 
 			var projects = Utilities.GetCodeProjectsInSolution(dte2);
 
@@ -132,13 +125,6 @@ namespace DaprDebugger.Commands
 
 			foreach (var project in projects)
 			{
-				if (project.Name == "Miscellaneous Files")
-				{
-					outputPane.OutputString($"Skipping project {project.Name}\n");
-
-					continue;
-				}
-
 				outputPane.OutputString($"Checking for dapr in project {project.Name}\n");
 
 				var properties = project.Properties.Cast<Property>()
@@ -162,7 +148,7 @@ namespace DaprDebugger.Commands
 
 				if (string.IsNullOrEmpty(projectFileName) || string.IsNullOrEmpty(projectOutputFileName) || string.IsNullOrEmpty(projectFullPath))
 				{
-					outputPane.OutputString($"Dapr configuration not found in project {project.Name}\n");
+					outputPane.OutputString($"Project not compatible: {project.Name}\n");
 
 					continue;
 				}
@@ -172,10 +158,7 @@ namespace DaprDebugger.Commands
 				projectFile.Load(projectFileName);
 
 				var appId = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppId")?.InnerText;
-				var appSSL = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppSSL")?.InnerText;
 				var appPort = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppPort")?.InnerText;
-
-				var daprComponentsPath = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprComponentsPath")?.InnerText;
 
 				if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(appPort))
 				{
@@ -317,43 +300,13 @@ namespace DaprDebugger.Commands
 			{
 				if (instance.IsRunning)
 				{
-					KillProcessAndChildren(instance.DaprProcessId);
+					Utilities.KillProcessTree(instance.DaprProcessId);
 				}
 			}
 
 			Instances.Clear();
 
 			KillingProcesses = false;
-		}
-
-		private static void KillProcessAndChildren(int processId)
-		{
-			if (processId <= 0)
-			{
-				return;
-			}
-
-			var searcher = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}");
-
-			var results = searcher.Get();
-
-			foreach (var baseObject in results)
-			{
-				var managementObject = (ManagementObject) baseObject;
-
-				KillProcessAndChildren(Convert.ToInt32(managementObject["ProcessID"]));
-			}
-
-			try
-			{
-				var process = Process.GetProcessById(processId);
-
-				process.Kill();
-			}
-			catch (ArgumentException)
-			{
-				// Process already exited.
-			}
 		}
 	}
 }

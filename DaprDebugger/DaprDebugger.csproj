@@ -48,7 +48,11 @@
   <ItemGroup>
     <Compile Include="Commands\DebugAllDaprInstancesInSolution.cs" />
     <Compile Include="Commands\AttachToAllDaprInstancesInSolution.cs" />
+    <Compile Include="DaprDependencyManager.cs" />
     <Compile Include="Models\DebuggableInstance.cs" />
+    <Compile Include="Commands\RestartDependencies.cs" />
+    <Compile Include="Commands\StartDependencies.cs" />
+    <Compile Include="Commands\StopDependencies.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DaprDebuggerPackage.cs" />

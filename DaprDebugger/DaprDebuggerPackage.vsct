@@ -69,6 +69,27 @@
           <ButtonText>Attach debugger to dapr projects</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidDaprDebuggerPackageCmdSet" id="StartDependencies" priority="0x0102" type="Button">
+        <Parent guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" />
+        <Icon guid="daprImages" id="bmpPicStartDependencies" />
+        <Strings>
+          <ButtonText>Start dependencies</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDaprDebuggerPackageCmdSet" id="StopDependencies" priority="0x0103" type="Button">
+        <Parent guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" />
+        <Icon guid="daprImages" id="bmpPicStopDependencies" />
+        <Strings>
+          <ButtonText>Stop dependencies</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDaprDebuggerPackageCmdSet" id="RestartDependencies" priority="0x0104" type="Button">
+        <Parent guid="guidDaprDebuggerPackageCmdSet" id="DaprDebugging" />
+        <Icon guid="daprImages" id="bmpPicRestartDependencies" />
+        <Strings>
+	        <ButtonText>Restart dependencies</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -78,7 +99,7 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="daprImages" href="Resources\DaprDebugIcons.png" usedList="bmpPicDebug, bmpPicAttach" />
+      <Bitmap guid="daprImages" href="Resources\DaprDebugIcons.png" usedList="bmpPicDebug, bmpPicAttach, bmpPicStartDependencies, bmpPicStopDependencies, bmpPicRestartDependencies" />
     </Bitmaps>
   </Commands>
 
@@ -91,11 +112,17 @@
       <IDSymbol name="DaprDebugging" value="0x1020" />
       <IDSymbol name="DebugAllDaprInstances" value="0x0100" />
       <IDSymbol name="AttachToAllDaprInstances" value="0x0101" />
+      <IDSymbol name="StartDependencies" value="0x0102" />
+      <IDSymbol name="StopDependencies" value="0x0103" />
+      <IDSymbol name="RestartDependencies" value="0x0104" />
     </GuidSymbol>
 
     <GuidSymbol name="daprImages" value="{23F52570-4791-4F9F-BC5D-8EDDDA2F029E}">
 	    <IDSymbol name="bmpPicDebug" value="1" />
 	    <IDSymbol name="bmpPicAttach" value="2" />
+	    <IDSymbol name="bmpPicStartDependencies" value="3" />
+	    <IDSymbol name="bmpPicStopDependencies" value="4" />
+	    <IDSymbol name="bmpPicRestartDependencies" value="5" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

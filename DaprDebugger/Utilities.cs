@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Management;
 using EnvDTE;
 using EnvDTE80;
+using Process = System.Diagnostics.Process;
 
 namespace DaprDebugger
 {
@@ -23,7 +26,7 @@ namespace DaprDebugger
 
 			foreach (var project in projects)
 			{
-				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder)
+				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder && project.Name != "Miscellaneous Files")
 				{
 					if (project.ProjectItems != null && project.ProjectItems.Count > 0)
 					{
@@ -69,6 +72,36 @@ namespace DaprDebugger
 			}
 
 			return pane;
+		}
+
+		internal static void KillProcessTree(int processId)
+		{
+			if (processId <= 0)
+			{
+				return;
+			}
+
+			var searcher = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}");
+
+			var results = searcher.Get();
+
+			foreach (var baseObject in results)
+			{
+				var managementObject = (ManagementObject) baseObject;
+
+				KillProcessTree(Convert.ToInt32(managementObject["ProcessID"]));
+			}
+
+			try
+			{
+				var process = Process.GetProcessById(processId);
+
+				process.Kill();
+			}
+			catch (ArgumentException)
+			{
+				// Process already exited.
+			}
 		}
 	}
 }
