@@ -171,13 +171,11 @@ namespace DaprDebugger.Commands
 
 				projectFile.Load(projectFileName);
 
-				var daprAppIdNode = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppId");
-				var daprAppPortNode = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppPort");
-				var daprAppProtocolNode = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppProtocol");
+				var appId = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppId")?.InnerText;
+				var appSSL = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppSSL")?.InnerText;
+				var appPort = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprAppPort")?.InnerText;
 
-				var appId = daprAppIdNode?.InnerText;
-				var appPort = daprAppPortNode?.InnerText;
-				var appProtocol = daprAppProtocolNode?.InnerText;
+				var daprComponentsPath = projectFile.SelectSingleNode("//Project/PropertyGroup/DaprComponentsPath")?.InnerText;
 
 				if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(appPort))
 				{
@@ -192,10 +190,20 @@ namespace DaprDebugger.Commands
 					$"--app-port {appPort}"
 				};
 
-				if (!string.IsNullOrEmpty(appProtocol))
-				{
-					arguments.Add($"--app-protocol {appProtocol}");
-				}
+				AddOptionalArgument(projectFile, arguments, "--app-ssl", "DaprAppSSL");
+				AddOptionalArgument(projectFile, arguments, "--app-protocol", "DaprAppProtocol");
+				AddOptionalArgument(projectFile, arguments, "--app-max-concurrency", "DaprAppMaxConcurrency");
+
+				AddOptionalArgument(projectFile, arguments, "--dapr-grpc-port", "DaprGrpcPort");
+				AddOptionalArgument(projectFile, arguments, "--dapr-http-port", "DaprHttpPort");
+
+				AddOptionalArgument(projectFile, arguments, "--image", "DaprImage");
+				AddOptionalArgument(projectFile, arguments, "--config", "DaprConfig");
+				AddOptionalArgument(projectFile, arguments, "--log-level", "DaprLogLevel");
+				AddOptionalArgument(projectFile, arguments, "--profile-port", "DaprProfilePort");
+				AddOptionalArgument(projectFile, arguments, "--components-path", "DaprComponentsPath");
+				AddOptionalArgument(projectFile, arguments, "--enable-profiling", "DaprEnableProfiling");
+				AddOptionalArgument(projectFile, arguments, "--placement-host-address", "DaprPlacementHostAddress");
 
 				var process = new Process
 				{
@@ -210,7 +218,6 @@ namespace DaprDebugger.Commands
 						Arguments = $"run {string.Join(" ", arguments)} -- dotnet run"
 					}
 				};
-
 
 				process.Exited += (_, _2) =>
 				{
@@ -285,6 +292,16 @@ namespace DaprDebugger.Commands
 			}
 
 			outputPane.OutputString("Debugging started.\n");
+		}
+
+		private void AddOptionalArgument(XmlDocument projectFile, List<string> arguments, string argument, string xmlNode)
+		{
+			var value = projectFile.SelectSingleNode($"//Project/PropertyGroup/{xmlNode}")?.InnerText;
+
+			if (!string.IsNullOrEmpty(value))
+			{
+				arguments.Add($"{argument} {value}");
+			}
 		}
 
 		private void KillProcesses()
